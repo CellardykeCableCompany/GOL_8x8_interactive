@@ -1,27 +1,37 @@
-/*************************************************** 
-  This is a library for our I2C LED Backpacks
+/*
+  Conway Game of Life on Adafruit 8x8 LED Matrix (single colour)
 
-  Designed specifically to work with the Adafruit LED Matrix backpacks 
-  ----> http://www.adafruit.com/products/872
-  ----> http://www.adafruit.com/products/871
-  ----> http://www.adafruit.com/products/870
+  great starting point 
+ https://github.com/tobyoxborrow/gameoflife-arduino/blob/master/GameOfLife/GameOfLife.ino
 
-  These displays use I2C to communicate, 2 pins are required to 
-  with 2 Address Select pins: 0x70, 0x71, 0x72 or 0x73. For backpacks
-  with 3 Address Select pins: 0x70 thru 0x77
+ adapted 
+ jon rogers
+ 01.05.2026
+ 
+/* ----------------
+rules
+from here
+https://playgameoflife.com/info
 
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
-  products from Adafruit!
 
-  Written by Limor Fried/Ladyada for Adafruit Industries.  
-  BSD license, all text above must be included in any redistribution
- ****************************************************/
+FOR EACH CELL THAT IS POPULATED (ALIVE - 1)
+Each cell with one or no neighbors dies, as if by solitude.
+Each cell with four or more neighbors dies, as if by overpopulation.
+Each cell with two or three neighbors survives.
+
+FOR EACH CELL THAT IS UNPOPULATED (DEAD - 0 )
+Each cell with exactly three neighbors becomes populated.
+Otherwise it dies. 
+
+ we'll treat edges as connected - they can see the other edge - so it wraps
+ other options https://www.chaos.org.uk/~eddy/craft/weblife.html
+
+*/ 
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include "Adafruit_LEDBackpack.h"
-#include "JoystickLib.h"
+
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
@@ -97,7 +107,7 @@ void writeGrid ();
 int grid[MAX_Y][MAX_X] = {0};
 // optional set up grids
 #define NUM_GRID 6
-#define GRID_SELECTION 0 // 0 = random; 
+#define GRID_SELECTION 4 // 0 = random; 
 
 // inspiration from https://pi.math.cornell.edu/~lipa/mec/lesson6.html
 const int sgrid[NUM_GRID][MAX_Y][MAX_X] PROGMEM = {
@@ -233,31 +243,6 @@ void face_laugh()
 
 void game_of_life()
 {
-// planning here for Conway Game of Life
-
-// first write to matrix - to have an individual point come on
-// test this by making a bouncing ball (could read accellerometer)
-
-// example  https://github.com/tobyoxborrow/gameoflife-arduino/blob/master/GameOfLife/GameOfLife.ino
-
-/* ----------------
-rules
-from here
-https://playgameoflife.com/info
-
-
-FOR EACH CELL THAT IS POPULATED (ALIVE - 1)
-Each cell with one or no neighbors dies, as if by solitude.
-Each cell with four or more neighbors dies, as if by overpopulation.
-Each cell with two or three neighbors survives.
-
-FOR EACH CELL THAT IS UNPOPULATED (DEAD - 0 )
-Each cell with exactly three neighbors becomes populated.
-Otherwise it dies. 
-*/
-
-// we'll treat edges as connected - they can see the other edge - so it wraps
-// other options https://www.chaos.org.uk/~eddy/craft/weblife.html
 
 /// scan the grid in different ways
 // simplest left (0) to right (7), bottom (0) to top (7)
