@@ -40,7 +40,7 @@ void setup() {
 void loop() {
 
   myGOL.update(); 
-  delay(100);  // need to implement as timer not as delay
+  
  
 }
 

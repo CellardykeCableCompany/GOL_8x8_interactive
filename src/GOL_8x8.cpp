@@ -1,5 +1,5 @@
 #include "GOL_8x8.h"
-
+int joyButtonState = 0;
 // define the actual data here
 const int sgrid[NUM_GRID][MAX_Y][MAX_X] PROGMEM = {
     {
@@ -84,67 +84,116 @@ void GOL_8x8::setup()
 
     // initialise grid
     randomSeed(analogRead(0));
-    setGrid();
+    setGrid(GRID_SELECTION);
     writeGrid();
-    delay(1000);
+    // delay(1000);
+    is_update = true;
+    previousTime = millis();
+
+    // joystick
+    // switch
+    pinMode(S1, INPUT_PULLUP);
+    button.init(S1);
+
+    // Configure the ButtonConfig with the event handler, and enable all higher
+    // level events.
+    ace_button::ButtonConfig *buttonConfig = button.getButtonConfig();
+    buttonConfig->setEventHandler(handleEvent);
+    buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureClick);
+    buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureDoubleClick);
+    //buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureLongPress);
+    //buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureRepeatPress);
+
+    // Check if the button was pressed while booting
+    if (button.isPressedRaw())
+    {
+        Serial.println(F("setup(): button was pressed while booting"));
+    }
+
+    Serial.println(F("setup(): ready"));
+
+    // global state of button
+    joyButtonState=0; 
 }
 
 void GOL_8x8::update()
 {
-    // scan the grid in different ways
-    // simplest left (0) to right (7), bottom (0) to top (7)
+ 
+  // AceButton
+    button.check();
+    //Serial.print(joyButtonState);
+    //joyButtonState=0; 
+    if(joyButtonState==3){
+        reset(); 
+        joyButtonState=255; 
+    }
 
-    // make sure gridge is initiated according to a rule
-    // could be random... or a pattern - read more
+    //Serial.println(joyButtonState);
+    /*
+    if(buttonState==2){
+        reset(); 
+        delay(500); 
+        buttonState=0; 
+    }
+        */
+ 
+    currentTime = millis();
 
-    // initiate new grid - the one you write to
 
-    int new_grid[MAX_Y][MAX_X] = {0}; // buffer
+    if (currentTime - previousTime >= RUN_SPEED)
+        is_update = true;
 
-    // now scan grid and set values based on GOL rules - above
-    for (int y = 0; y < MAX_Y; y++)
+    if (is_update)
     {
-        for (int x = 0; x < MAX_X; x++)
+        int new_grid[MAX_Y][MAX_X] = {0}; // buffer
+
+        // now scan grid and set values based on GOL rules - above
+        for (int y = 0; y < MAX_Y; y++)
         {
-            int val = countNeighbour(x, y);
-            if (grid[x][y] == 1)
+            for (int x = 0; x < MAX_X; x++)
             {
-                // cell is alive (1)
-                if ((val == (LIFE_THRESHOLD - 1)) || (val == LIFE_THRESHOLD))
+                int val = countNeighbour(x, y);
+                if (grid[x][y] == 1)
                 {
-                    new_grid[x][y] = 1;
+                    // cell is alive (1)
+                    if ((val == (LIFE_THRESHOLD - 1)) || (val == LIFE_THRESHOLD))
+                    {
+                        new_grid[x][y] = 1;
+                    }
+                    else
+                    {
+                        // it dies (0)
+                        new_grid[x][y] = 0;
+                    }
                 }
-                else
+                if (grid[x][y] == 0)
                 {
-                    // it dies (0)
-                    new_grid[x][y] = 0;
-                }
-            }
-            if (grid[x][y] == 0)
-            {
-                // cell is dead (0)
-                if (val == LIFE_THRESHOLD)
-                {
-                    new_grid[x][y] = 1;
-                }
-                else
-                {
-                    new_grid[x][y] = 0; // stays dead
+                    // cell is dead (0)
+                    if (val == LIFE_THRESHOLD)
+                    {
+                        new_grid[x][y] = 1;
+                    }
+                    else
+                    {
+                        new_grid[x][y] = 0; // stays dead
+                    }
                 }
             }
         }
-    }
 
-    // now copy new_grid to grid.
+        // now copy new_grid to grid.
 
-    for (int y = 0; y < MAX_Y; y++)
-    {
-        for (int x = 0; x < MAX_X; x++)
+        for (int y = 0; y < MAX_Y; y++)
         {
-            grid[x][y] = new_grid[x][y];
+            for (int x = 0; x < MAX_X; x++)
+            {
+                grid[x][y] = new_grid[x][y];
+            }
         }
+        writeGrid();
+        previousTime = currentTime;
+        is_update = false;
     }
-    writeGrid();
 }
 
 int GOL_8x8::countNeighbour(int x, int y)
@@ -184,12 +233,10 @@ int GOL_8x8::countNeighbour(int x, int y)
     return val;
 }
 
-void GOL_8x8::setGrid()
+void GOL_8x8::setGrid(int mode)
 {
-    // set all elements in the grid to zero
-    // grid[MAX_Y][MAX_X] = {0};
-
-    if (GRID_SELECTION == 0)
+    
+    if (mode == 0)
     {
         // randomly asign 1 or 0 into an element
         for (int y = 0; y < MAX_Y; y++)
@@ -213,7 +260,7 @@ void GOL_8x8::setGrid()
         {
             for (int x = 0; x < MAX_X; x++)
             {
-                grid[x][y] = sgrid[GRID_SELECTION - 1][y][x]; // -1 as 0 is random // note swapped y, x in sGrid to align with the led matrix positioning... not sure why... fix!
+                grid[x][y] = sgrid[mode - 1][y][x]; // -1 as 0 is random // note swapped y, x in sGrid to align with the led matrix positioning... not sure why... fix!
             }
         }
     }
@@ -223,20 +270,54 @@ void GOL_8x8::writeGrid()
 {
     // write contents of the grid to the LED matrix
 
-  matrix.clear();
-  
-  
+    matrix.clear();
 
-  for (int y=0; y<MAX_Y; y++){
-    for (int x=0; x<MAX_X; x++){
-      if (grid[x][y]==1)
-        matrix.drawPixel(x, y, LED_ON);
-      else 
-       matrix.drawPixel(x, y, LED_OFF);  
-	}
-  }
-  //matrix.writePixel(7,0, LED_ON);
+    for (int y = 0; y < MAX_Y; y++)
+    {
+        for (int x = 0; x < MAX_X; x++)
+        {
+            if (grid[x][y] == 1)
+                matrix.drawPixel(x, y, LED_ON);
+            else
+                matrix.drawPixel(x, y, LED_OFF);
+        }
+    }
+    // matrix.writePixel(7,0, LED_ON);
 
-  matrix.writeDisplay();
+    matrix.writeDisplay();
+}
 
+void GOL_8x8::reset()
+{
+    Serial.println("Reset");
+    randomSeed(analogRead(0));
+    setGrid(GRID_SELECTION);
+    writeGrid();
+    return;
+}
+
+// AceButton code
+//  https://github.com/bxparks/AceButton/blob/develop/examples/SingleButton/SingleButton.ino
+
+void GOL_8x8::handleEvent(ace_button::AceButton * /* button */, uint8_t eventType,
+                          uint8_t buttonState)
+{
+
+#ifdef DEBUG
+    // Print out a message for all events.
+    Serial.print(F("handleEvent(): eventType: "));
+    Serial.print(ace_button::AceButton::eventName(eventType));
+    Serial.print(F("; buttonState: "));
+    Serial.println(buttonState);
+#endif
+
+    switch (eventType)
+    {
+        case ace_button::AceButton::kEventClicked:
+        case ace_button::AceButton::kEventLongPressed:
+        case ace_button::AceButton::kEventDoubleClicked:
+            joyButtonState = eventType;  // only store events you care about
+            break;
+        // ignore Pressed and Released
+    }
 }
