@@ -101,8 +101,8 @@ void GOL_8x8::setup()
     buttonConfig->setEventHandler(handleEvent);
     buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureClick);
     buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureDoubleClick);
-    //buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureLongPress);
-    //buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureRepeatPress);
+    buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureLongPress);
+    buttonConfig->setFeature(ace_button::ButtonConfig::kFeatureRepeatPress);
 
     // Check if the button was pressed while booting
     if (button.isPressedRaw())
@@ -114,6 +114,7 @@ void GOL_8x8::setup()
 
     // global state of button
     joyButtonState=0; 
+    is_paused=false;
 }
 
 void GOL_8x8::update()
@@ -125,7 +126,14 @@ void GOL_8x8::update()
     //joyButtonState=0; 
     if(joyButtonState==3){
         reset(); 
-        joyButtonState=255; 
+        joyButtonState=0xFF; 
+    }
+    if (joyButtonState==4)
+    {
+        Serial.println("paused! ");
+        is_paused=!is_paused; 
+        joyButtonState=0xFF; 
+
     }
 
     //Serial.println(joyButtonState);
@@ -139,6 +147,10 @@ void GOL_8x8::update()
  
     currentTime = millis();
 
+  
+    
+    
+    if (is_paused==0){
 
     if (currentTime - previousTime >= RUN_SPEED)
         is_update = true;
@@ -194,6 +206,7 @@ void GOL_8x8::update()
         previousTime = currentTime;
         is_update = false;
     }
+}
 }
 
 int GOL_8x8::countNeighbour(int x, int y)
@@ -315,6 +328,8 @@ void GOL_8x8::handleEvent(ace_button::AceButton * /* button */, uint8_t eventTyp
     {
         case ace_button::AceButton::kEventClicked:
         case ace_button::AceButton::kEventLongPressed:
+            joyButtonState = eventType; 
+            break; 
         case ace_button::AceButton::kEventDoubleClicked:
             joyButtonState = eventType;  // only store events you care about
             break;

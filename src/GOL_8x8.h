@@ -41,13 +41,10 @@ private:
     Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
     ace_button::AceButton button;
    
-
     int grid[MAX_Y][MAX_X] = {0};
     int nextGrid[MAX_Y][MAX_X] = {0};
     long int currentTime; 
     long int previousTime; 
-    
-
-
     bool is_update; 
+    bool is_paused;
 };
