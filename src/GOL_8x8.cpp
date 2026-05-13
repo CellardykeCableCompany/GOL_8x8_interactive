@@ -138,7 +138,7 @@ void GOL_8x8::update()
     // reverse value for switch (better way to to do this i am sure.. )
     int val;
     switch2 = digitalRead(S2);
-   // Serial.println(switch2); 
+    // Serial.println(switch2);
     // reverse switch value
 
     // need to have switch2 in here (separate switch)
@@ -146,7 +146,7 @@ void GOL_8x8::update()
     read(mX, mY, JOY_MODE);
     if (switch2 == 0 && oldSwitch2 == 1)
     {
-        //Serial.println("pressed"); 
+        // Serial.println("pressed");
         if (grid[mX][mY] == 0)
             val = 1;
         else
@@ -154,7 +154,7 @@ void GOL_8x8::update()
 
         draw(mX, mY, val);
     }
-    oldSwitch2=switch2; 
+    oldSwitch2 = switch2;
 
     // Serial.println(switch2);
 
@@ -172,6 +172,7 @@ void GOL_8x8::update()
         Serial.println("paused! ");
         is_paused = !is_paused;
         joyButtonState = 0xFF;
+        flashAll();
     }
 
     // current time for GOL -> need to change to currentTimeGOL
@@ -489,6 +490,18 @@ void GOL_8x8::read(int &x, int &y, int mode)
     x = constrain(x, 0, 7);
     y = constrain(y, 0, 7);
     is_move = false;
+}
+
+void GOL_8x8::flashAll()
+{
+    // flash all pixels brielfy to signify Pause state
+    for (int y = 0; y < MAX_JY; y++)
+    {
+        for (int x = 0; x < MAX_JX; x++)
+            matrix.drawPixel(x, y, LED_ON);
+    }
+    matrix.writeDisplay();
+    delay(10); // don't like using delay() but in this case it's ok. 
 }
 
 // AceButton code

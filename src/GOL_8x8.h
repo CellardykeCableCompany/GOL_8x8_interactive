@@ -32,8 +32,8 @@
 #define MAX_MY 8
 #define JOY_MODE 1        // way the joystick changes x, y values
 #define JOY_THRESH 150    // threhold joystick has to move before increment happens (buffer zone in middle)
-#define BLINK_ON_TIME 200 // using this as an equal blink on/off time is visually disturbing
-#define BLINK_OFF_TIME 1
+#define BLINK_ON_TIME 500 // using this as an equal blink on/off time is visually disturbing
+#define BLINK_OFF_TIME 5
 
 
 // untidy - putting as externs here - need to figure out better way to do thi
@@ -103,6 +103,7 @@ private:
     void setGrid(int);
     void writeGrid();
     void reset();
+    void flashAll(); // momentarily flash on all pixels. using to show pause activated
 
     // draw
     void read(int &, int &, int);
