@@ -28,6 +28,7 @@ Otherwise it dies.
 
 */ 
 #include "GOL_8x8.h"; 
+ int joystickLimits[4] = {512, 512, 512, 512};
 
 GOL_8x8 myGOL; 
 
@@ -39,7 +40,11 @@ void setup() {
 
 void loop() {
 
-  myGOL.update(); 
+ 
+ myGOL.update(); 
+  
+
+
   
  
 }
