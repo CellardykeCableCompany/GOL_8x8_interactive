@@ -91,6 +91,8 @@ GOL_8x8::GOL_8x8()
 
     mX = 4;
     mY = 4;
+    old_mX = mX;
+    old_mY = mY; 
 }
 
 // public
@@ -106,6 +108,7 @@ void GOL_8x8::setup()
     // delay(1000);
     is_update = true;
     previousTime = millis();
+    cursorTime = millis(); 
 
     // joystick
     // switch
@@ -158,6 +161,9 @@ void GOL_8x8::update()
 
     // Serial.println(switch2);
 
+    // joystick button control
+    // double press - reset grid
+    // long press - pause/un-pause grid
     // AceButton
     button.check();
     // Serial.print(joyButtonState);
@@ -191,7 +197,27 @@ void GOL_8x8::update()
     }
 
     writeGrid();
-    blink(mX, mY);
+
+    // cursor
+    /*
+     show curson only when mX, mY change - for CURSOR_VISIBLE set of time 
+    
+    */
+    
+
+    if (mX!=old_mX || mY!=old_mY)
+    { 
+        // reset timer
+       cursorTime = millis() + CURSOR_VISIBLE; 
+    }
+    old_mX = mX; 
+    old_mY = mY; 
+
+    currentTime=millis(); 
+
+    if (currentTime < cursorTime)
+        blink(mX, mY);
+
     matrix.writeDisplay();
 
     // Serial.print(mX); Serial.print("  "); Serial.println(mY);
@@ -501,7 +527,7 @@ void GOL_8x8::flashAll()
             matrix.drawPixel(x, y, LED_ON);
     }
     matrix.writeDisplay();
-    delay(10); // don't like using delay() but in this case it's ok. 
+    delay(10); // don't like using delay() but in this case it's ok.
 }
 
 // AceButton code
